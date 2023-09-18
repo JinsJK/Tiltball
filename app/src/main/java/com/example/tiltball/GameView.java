@@ -11,6 +11,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.graphics.Bitmap;
@@ -21,20 +22,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GameView extends View implements SensorEventListener {
+    private Vibrator vibrator;
     private Paint ballPaint;
     private Bitmap backgroundImage;
     private Paint wallPaint;
     private Paint targetPaint;
     private Ball blueBall;
     private int score = 0;
+    private float ballRadius = 50f; // example size
+    private float targetRadius = 60f;
+    private float sensitivityFactor = 10.0f;  // Adjust this value as needed
     private Paint scorePaint;
     private float ballX, ballY;
     private float targetX, targetY;
-    private float ballRadius = 50f; // example size
-    private float targetRadius = 60f;
-    private float sensitivityFactor = 5.0f;  // Adjust this value as needed
-
-
     private SensorManager sensorManager;
     private Sensor accelerometerSensor;
 
@@ -44,22 +44,36 @@ public class GameView extends View implements SensorEventListener {
     public GameView(Context context) {
         super(context);
         init(context);
+        resetGame();
     }
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
+        resetGame();
     }
 
     public GameView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
+        resetGame();
     }
+
+
+    private void resetGame() {
+        score = 0;
+        // other initializations or resets as needed
+        ballX = getWidth() / 2;
+        ballY = getHeight() - ballRadius * 2;
+        initializeRedBalls();
+        initializeBlueBall();
+    }
+
 
     private void init(Context context) {
 
         backgroundImage = BitmapFactory.decodeResource(getResources(), R.drawable.background_image);
-
+        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
         ballPaint = new Paint();
         ballPaint.setColor(Color.GREEN);
@@ -84,11 +98,11 @@ public class GameView extends View implements SensorEventListener {
         scorePaint.setTextAlign(Paint.Align.RIGHT);
 
         // Initialize the blue ball
-        initializeblueBall();
+        initializeBlueBall();
     }
 
-    private void initializeblueBall() {
-        float buffer = 100; // Buffer value
+    private void initializeBlueBall() {
+        float buffer = 150; // Increased buffer value
         float desiredSpeed = 20; // Adjust this for your desired speed of blue ball
         float distanceTogreen;
 
@@ -113,8 +127,6 @@ public class GameView extends View implements SensorEventListener {
         blueBall.dy = (blueBall.dy / magnitude) * desiredSpeed;
     }
 
-
-
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         backgroundImage = Bitmap.createScaledBitmap(backgroundImage, getWidth(), getHeight(), true);
@@ -124,11 +136,11 @@ public class GameView extends View implements SensorEventListener {
         ballX = w / 2;
         ballY = h - ballRadius * 2;
 
-        initializeredBalls();
-        initializeblueBall();
+        initializeRedBalls();
+        initializeBlueBall();
     }
 
-    private void initializeredBalls() {
+    private void initializeRedBalls() {
         redBalls.clear();  // Clear existing balls
 
         float buffer = 100; // Buffer value
@@ -215,7 +227,10 @@ public class GameView extends View implements SensorEventListener {
         for (Ball redBall : redBalls) {
             float distance = (float) Math.sqrt((ballX - redBall.x) * (ballX - redBall.x) + (ballY - redBall.y) * (ballY - redBall.y));
             if (distance < ballRadius + redBall.radius) {
-                // The green ball collided with a red ball, so end the game.
+                if (vibrator.hasVibrator()) {
+                    vibrator.vibrate(500);
+                }
+                    // The green ball collided with a red ball, so end the game.
                 endGame();
                 return;
             }
@@ -223,13 +238,13 @@ public class GameView extends View implements SensorEventListener {
 
         // Check for collision with blue ball and update score
         if (blueBall != null) {
-            float distanceToblueBall = (float) Math.sqrt((ballX - blueBall.x) * (ballX - blueBall.x) + (ballY - blueBall.y) * (ballY - blueBall.y));
-            if (distanceToblueBall < ballRadius + blueBall.radius) {
+            float distanceToBlueBall = (float) Math.sqrt((ballX - blueBall.x) * (ballX - blueBall.x) + (ballY - blueBall.y) * (ballY - blueBall.y));
+            if (distanceToBlueBall < ballRadius + blueBall.radius) {
                 // The ball has collided with the blue ball, so increase the score.
                 score += 50;
                 // Remove the current blue ball and spawn a new one.
                 blueBall = null;
-                initializeblueBall();
+                initializeBlueBall();
             }
         }
     }
@@ -239,6 +254,9 @@ public class GameView extends View implements SensorEventListener {
         Intent intent = new Intent(getContext(), GameOverActivity.class);
         intent.putExtra("SCORE", score);  // Pass the score to GameOverActivity
         getContext().startActivity(intent);
+
+        // Reset the score
+        score = 0;
 
         // Unregister the sensor listener to stop updates
         sensorManager.unregisterListener(this);
@@ -285,32 +303,13 @@ public class GameView extends View implements SensorEventListener {
         b.x += overlap * nx;
         b.y += overlap * ny;
     }
-
-
-
-
     private void updateBalls() {
         for (Ball ball : redBalls) {
             ball.x += ball.dx;
             ball.y += ball.dy;
 
-            // Handle collisions with the screen edges
-            if (ball.x - ball.radius < 0) {
-                ball.x = ball.radius;  // Ensure it's inside the screen
-                ball.dx = -ball.dx;    // Reverse direction
-            }
-            if (ball.x + ball.radius > getWidth()) {
-                ball.x = getWidth() - ball.radius; // Ensure it's inside the screen
-                ball.dx = -ball.dx;                // Reverse direction
-            }
-            if (ball.y - ball.radius < 0) {
-                ball.y = ball.radius;  // Ensure it's inside the screen
-                ball.dy = -ball.dy;    // Reverse direction
-            }
-            if (ball.y + ball.radius > getHeight()) {
-                ball.y = getHeight() - ball.radius; // Ensure it's inside the screen
-                ball.dy = -ball.dy;                // Reverse direction
-            }
+            // Handle collisions with the screen edges for red balls
+            handleWallCollision(ball);
         }
 
         // Update blue ball if it exists
@@ -319,12 +318,7 @@ public class GameView extends View implements SensorEventListener {
             blueBall.y += blueBall.dy;
 
             // Handle collisions with the screen edges for the blue ball
-            if (blueBall.x - blueBall.radius < 0 || blueBall.x + blueBall.radius > getWidth()) {
-                blueBall.dx = -blueBall.dx;
-            }
-            if (blueBall.y - blueBall.radius < 0 || blueBall.y + blueBall.radius > getHeight()) {
-                blueBall.dy = -blueBall.dy;
-            }
+            handleWallCollision(blueBall);
 
             // Check collisions between blue ball and red balls
             for (Ball redBall : redBalls) {
@@ -346,17 +340,31 @@ public class GameView extends View implements SensorEventListener {
             }
         }
     }
+    private void handleWallCollision(Ball ball) {
+        // Handle collisions with the screen edges
+        if (ball.x - ball.radius < 0) {
+            ball.x = ball.radius;  // Ensure it's inside the screen
+            ball.dx = -ball.dx;    // Reverse direction
+        }
+        if (ball.x + ball.radius > getWidth()) {
+            ball.x = getWidth() - ball.radius; // Ensure it's inside the screen
+            ball.dx = -ball.dx;                // Reverse direction
+        }
+        if (ball.y - ball.radius < 0) {
+            ball.y = ball.radius;  // Ensure it's inside the screen
+            ball.dy = -ball.dy;    // Reverse direction
+        }
+        if (ball.y + ball.radius > getHeight()) {
+            ball.y = getHeight() - ball.radius; // Ensure it's inside the screen
+            ball.dy = -ball.dy;                // Reverse direction
+        }
+    }
     private boolean ballsAreColliding(Ball a, Ball b) {
         float dx = b.x - a.x;
         float dy = b.y - a.y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
         return distance < a.radius + b.radius;
     }
-
-
-
-
-
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         // This is unused for the current example, but it's requiblue by the SensorEventListener interface.
