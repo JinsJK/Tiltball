@@ -65,7 +65,7 @@ public class GameView extends View implements SensorEventListener {
         // other initializations or resets as needed
         ballX = getWidth() / 2;
         ballY = getHeight() - ballRadius * 2;
-        initializeRedBalls();
+        //initializeRedBalls();
         initializeBlueBall();
     }
 
@@ -136,9 +136,20 @@ public class GameView extends View implements SensorEventListener {
         ballX = w / 2;
         ballY = h - ballRadius * 2;
 
-        initializeRedBalls();
+        startRedBallSpawning();
         initializeBlueBall();
     }
+
+    private void startRedBallSpawning() {
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                initializeRedBalls();
+                invalidate(); // Redraw the view to show the red balls
+            }
+        }, 3000); // Delay of 3 seconds
+    }
+
 
     private void initializeRedBalls() {
         redBalls.clear();  // Clear existing balls
