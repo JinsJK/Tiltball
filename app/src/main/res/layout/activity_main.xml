@@ -13,10 +13,10 @@
         android:id="@+id/tv_instructions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tilt your device to guide the ball to the target. Avoid the obstacles!"
+        android:text="Welcome to TiltBall! Here's how to play:\n\n1. Tilt your device left or right to guide the ball\n2. Avoid hitting any obstacles in red\n3. If the ball hits an obstacle, it's GAME OVER !!\n\nPress the 'Start game' button when you're ready to begin. Good luck!"
         android:textAlignment="center"
         android:layout_marginBottom="24dp"
-        android:textSize="20sp"
+        android:textSize="15sp"
         android:textStyle="bold" />
 
     <androidx.appcompat.widget.AppCompatButton

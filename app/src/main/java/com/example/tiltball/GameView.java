@@ -31,7 +31,7 @@ public class GameView extends View implements SensorEventListener {
     private int score = 0;
     private float ballRadius = 50f; // example size
     private float targetRadius = 60f;
-    private float sensitivityFactor = 10.0f;  // Adjust this value as needed
+    private float sensitivityFactor = 5.0f;  // Adjust this value as needed
     private Paint scorePaint;
     private float ballX, ballY;
     private float targetX, targetY;
@@ -155,7 +155,7 @@ public class GameView extends View implements SensorEventListener {
         redBalls.clear();  // Clear existing balls
 
         float buffer = 100; // Buffer value
-        float desiredSpeed = 10;   // Adjust this for your desiblue speed of red balls
+        float desiredSpeed = 10;   // Adjust this for your desired speed of red balls
         for (int i = 0; i < 4; i++) {
             float x = buffer + (float) (Math.random() * (getWidth() - 2 * buffer));
             float y = buffer + (float) (Math.random() * buffer);
