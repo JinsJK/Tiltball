@@ -22,6 +22,14 @@
         android:layout_below="@+id/tv_game_over_message"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"/>
+    <TextView
+        android:id="@+id/tv_high_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:layout_below="@+id/tv_score"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"/>
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btn_restart"
@@ -36,7 +44,7 @@
         android:textColor="@android:color/white"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:layout_below="@+id/tv_score"
+        android:layout_below="@+id/tv_high_score"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"/>
 

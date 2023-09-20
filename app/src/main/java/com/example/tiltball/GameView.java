@@ -4,6 +4,7 @@ package com.example.tiltball;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -31,14 +32,30 @@ public class GameView extends View implements SensorEventListener {
     private int score = 0;
     private float ballRadius = 50f; // example size
     private float targetRadius = 60f;
-    private float sensitivityFactor = 5.0f;  // Adjust this value as needed
+    private float sensitivityFactor = 4.0f;  // Adjust this value as needed
     private Paint scorePaint;
     private float ballX, ballY;
     private float targetX, targetY;
     private SensorManager sensorManager;
     private Sensor accelerometerSensor;
-
     private List<Ball> redBalls = new ArrayList<>();
+    private static final String PREFS_NAME = "TiltBallHighScore";
+    private static final String HIGH_SCORE_KEY = "HighScore";
+    private boolean gameStarted = false;
+
+
+    private int getHighScore() {
+        SharedPreferences preferences = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return preferences.getInt(HIGH_SCORE_KEY, 0);
+    }
+
+    private void setHighScore(int score) {
+        SharedPreferences preferences = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(HIGH_SCORE_KEY, score);
+        editor.apply();
+    }
+
 
 
     public GameView(Context context) {
@@ -102,9 +119,9 @@ public class GameView extends View implements SensorEventListener {
     }
 
     private void initializeBlueBall() {
-        float buffer = 150; // Increased buffer value
+        float buffer = 100; // Increased buffer value
         float desiredSpeed = 20; // Adjust this for your desired speed of blue ball
-        float distanceTogreen;
+        float distanceToGreen;
 
         Paint bluePaint = new Paint();
         bluePaint.setColor(Color.BLUE);
@@ -116,16 +133,17 @@ public class GameView extends View implements SensorEventListener {
             // Calculate the distance to the green ball
             float dx = x - ballX;
             float dy = y - ballY;
-            distanceTogreen = (float) Math.sqrt(dx * dx + dy * dy);
+            distanceToGreen = (float) Math.sqrt(dx * dx + dy * dy);
 
             blueBall = new Ball(x, y, ballRadius, bluePaint, desiredSpeed);
-        } while (distanceTogreen < buffer + ballRadius + blueBall.radius);
+        } while (distanceToGreen < buffer + ballRadius + blueBall.radius);
 
         // Normalize blue ball velocity for consistent speed
         float magnitude = (float) Math.sqrt(blueBall.dx * blueBall.dx + blueBall.dy * blueBall.dy);
         blueBall.dx = (blueBall.dx / magnitude) * desiredSpeed;
         blueBall.dy = (blueBall.dy / magnitude) * desiredSpeed;
     }
+
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -138,6 +156,7 @@ public class GameView extends View implements SensorEventListener {
 
         startRedBallSpawning();
         initializeBlueBall();
+        gameStarted = true; // The game has now started
     }
 
     private void startRedBallSpawning() {
@@ -147,7 +166,7 @@ public class GameView extends View implements SensorEventListener {
                 initializeRedBalls();
                 invalidate(); // Redraw the view to show the red balls
             }
-        }, 3000); // Delay of 3 seconds
+        }, 2000); // Delay of 2 seconds
     }
 
 
@@ -221,11 +240,13 @@ public class GameView extends View implements SensorEventListener {
                 ballY = nextY;
             }
 
-            postInvalidate(); // blueraw the view
+            postInvalidate(); // redraw the view
         }
 
         updateBalls();
-        checkGameStatus();
+        if (gameStarted) {
+            checkGameStatus();
+        }
     }
     private void checkGameStatus() {
         float distanceToTarget = (float) Math.sqrt((ballX - targetX) * (ballX - targetX) + (ballY - targetY) * (ballY - targetY));
@@ -252,6 +273,9 @@ public class GameView extends View implements SensorEventListener {
             float distanceToBlueBall = (float) Math.sqrt((ballX - blueBall.x) * (ballX - blueBall.x) + (ballY - blueBall.y) * (ballY - blueBall.y));
             if (distanceToBlueBall < ballRadius + blueBall.radius) {
                 // The ball has collided with the blue ball, so increase the score.
+                if (vibrator.hasVibrator()) {
+                    vibrator.vibrate(200);
+                }
                 score += 50;
                 // Remove the current blue ball and spawn a new one.
                 blueBall = null;
@@ -262,6 +286,11 @@ public class GameView extends View implements SensorEventListener {
 
 
     private void endGame() {
+        int highScore = getHighScore();
+        if(score > highScore) {
+            setHighScore(score);
+            highScore = score;
+        }
         Intent intent = new Intent(getContext(), GameOverActivity.class);
         intent.putExtra("SCORE", score);  // Pass the score to GameOverActivity
         getContext().startActivity(intent);
