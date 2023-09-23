@@ -1,4 +1,4 @@
-//GameView.java
+//Authors: Jins & Sailesh
 
 package com.example.tiltball;
 
@@ -44,11 +44,13 @@ public class GameView extends View implements SensorEventListener {
     private boolean gameStarted = false;
 
 
+    // Method to get the HighScore
     private int getHighScore() {
         SharedPreferences preferences = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         return preferences.getInt(HIGH_SCORE_KEY, 0);
     }
 
+    //Method to set the HighScore
     private void setHighScore(int score) {
         SharedPreferences preferences = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
@@ -57,26 +59,28 @@ public class GameView extends View implements SensorEventListener {
     }
 
 
-
+    //Constructor for Gameview with Context as parameter
     public GameView(Context context) {
         super(context);
         init(context);
         resetGame();
     }
 
+    //Constructor for Gameview with Context and AttributeSet as parameters
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
         resetGame();
     }
 
+    //Constructor for GameView with Context , AttributeSet and defStyleAttr as parameters
     public GameView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
         resetGame();
     }
 
-
+    // Method to reset the Game
     private void resetGame() {
         score = 0;
         // other initializations or resets as needed
@@ -86,7 +90,7 @@ public class GameView extends View implements SensorEventListener {
         initializeBlueBall();
     }
 
-
+    // method for initialisation
     private void init(Context context) {
 
         backgroundImage = BitmapFactory.decodeResource(getResources(), R.drawable.background_image);
@@ -108,19 +112,18 @@ public class GameView extends View implements SensorEventListener {
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
 
-        // Initialize score paint
         scorePaint = new Paint();
-        scorePaint.setColor(Color.WHITE);  // set the color as per your requirement
-        scorePaint.setTextSize(40);        // set the size as per your requirement
+        scorePaint.setColor(Color.WHITE);
+        scorePaint.setTextSize(40);
         scorePaint.setTextAlign(Paint.Align.RIGHT);
 
-        // Initialize the blue ball
         initializeBlueBall();
     }
 
+    // To initialize the Blue Ball
     private void initializeBlueBall() {
-        float buffer = 100; // Increased buffer value
-        float desiredSpeed = 20; // Adjust this for your desired speed of blue ball
+        float buffer = 100;
+        float desiredSpeed = 20;
         float distanceToGreen;
 
         Paint bluePaint = new Paint();
@@ -130,7 +133,7 @@ public class GameView extends View implements SensorEventListener {
             float x = buffer + (float) (Math.random() * (getWidth() - 2 * buffer));
             float y = buffer + (float) (Math.random() * buffer);
 
-            // Calculate the distance to the green ball
+            // Calculating the distance to the green ball
             float dx = x - ballX;
             float dy = y - ballY;
             distanceToGreen = (float) Math.sqrt(dx * dx + dy * dy);
@@ -138,7 +141,7 @@ public class GameView extends View implements SensorEventListener {
             blueBall = new Ball(x, y, ballRadius, bluePaint, desiredSpeed);
         } while (distanceToGreen < buffer + ballRadius + blueBall.radius);
 
-        // Normalize blue ball velocity for consistent speed
+        // Normalizing blue ball velocity for consistent speed
         float magnitude = (float) Math.sqrt(blueBall.dx * blueBall.dx + blueBall.dy * blueBall.dy);
         blueBall.dx = (blueBall.dx / magnitude) * desiredSpeed;
         blueBall.dy = (blueBall.dy / magnitude) * desiredSpeed;
@@ -150,31 +153,32 @@ public class GameView extends View implements SensorEventListener {
         backgroundImage = Bitmap.createScaledBitmap(backgroundImage, getWidth(), getHeight(), true);
         super.onSizeChanged(w, h, oldw, oldh);
 
-        // Initialize the green ball's position here
+        // Initializing the green ball's position to down of the screen
         ballX = w / 2;
         ballY = h - ballRadius * 2;
 
         startRedBallSpawning();
         initializeBlueBall();
-        gameStarted = true; // The game has now started
+        gameStarted = true;
     }
 
+    //To spawn the red ball
     private void startRedBallSpawning() {
         postDelayed(new Runnable() {
             @Override
             public void run() {
                 initializeRedBalls();
-                invalidate(); // Redraw the view to show the red balls
+                invalidate();
             }
-        }, 2000); // Delay of 2 seconds
+        }, 2000);
     }
 
-
+    // Initialize the Red Balls
     private void initializeRedBalls() {
-        redBalls.clear();  // Clear existing balls
+        redBalls.clear();
 
-        float buffer = 100; // Buffer value
-        float desiredSpeed = 10;   // Adjust this for your desired speed of red balls
+        float buffer = 100;
+        float desiredSpeed = 10;
         for (int i = 0; i < 4; i++) {
             float x = buffer + (float) (Math.random() * (getWidth() - 2 * buffer));
             float y = buffer + (float) (Math.random() * buffer);
@@ -186,47 +190,42 @@ public class GameView extends View implements SensorEventListener {
         }
     }
 
-
+    //Method to draw the circle
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(backgroundImage, 0, 0, null);
 
         super.onDraw(canvas);
 
-        // Draw the green player ball
         canvas.drawCircle(ballX, ballY, ballRadius, ballPaint);
 
-        // Draw the target
         canvas.drawCircle(targetX, targetY, targetRadius, targetPaint);
 
-        // Draw all the red balls
         for (Ball ball : redBalls) {
             canvas.drawCircle(ball.x, ball.y, ball.radius, ball.paint);
         }
-        // Draw the blue ball
+        //blue ball
         if (blueBall != null) {
             canvas.drawCircle(blueBall.x, blueBall.y, blueBall.radius, blueBall.paint);
         }
 
-        // Draw the score at the top right
+        // Show score at the top right
         canvas.drawText("Score: " + score, getWidth() - 10, 50, scorePaint);
     }
 
 
+    //Method to change the balls according to the motion of the phone
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            // Note: We are multiplying by a factor to give a smoother movement. You might want to adjust this.
             float deltaX = -event.values[0]  * sensitivityFactor;
             float deltaY = event.values[1]  * sensitivityFactor;
 
-            // Pblueict the next position of the ball
             float nextX = ballX + deltaX;
             float nextY = ballY + deltaY;
 
-            // Check for collisions with the screen boundaries
+            // Checking for collisions with the screen boundaries
 
-            // For X-axis
             if (nextX - ballRadius < 0 || nextX + ballRadius > getWidth()) {
                 ballX -= deltaX;
             } else {
@@ -240,7 +239,7 @@ public class GameView extends View implements SensorEventListener {
                 ballY = nextY;
             }
 
-            postInvalidate(); // redraw the view
+            postInvalidate();
         }
 
         updateBalls();
@@ -248,12 +247,13 @@ public class GameView extends View implements SensorEventListener {
             checkGameStatus();
         }
     }
+
+    //Method to check the Game Status
     private void checkGameStatus() {
         float distanceToTarget = (float) Math.sqrt((ballX - targetX) * (ballX - targetX) + (ballY - targetY) * (ballY - targetY));
         if (distanceToTarget < ballRadius + targetRadius) {
-            // The ball has reached the target, so end the game.
             endGame();
-            return;  // Important to return here, so if this condition is met, the next doesn't get checked.
+            return;
         }
 
         for (Ball redBall : redBalls) {
@@ -262,7 +262,6 @@ public class GameView extends View implements SensorEventListener {
                 if (vibrator.hasVibrator()) {
                     vibrator.vibrate(500);
                 }
-                    // The green ball collided with a red ball, so end the game.
                 endGame();
                 return;
             }
@@ -277,14 +276,14 @@ public class GameView extends View implements SensorEventListener {
                     vibrator.vibrate(200);
                 }
                 score += 50;
-                // Remove the current blue ball and spawn a new one.
+                // To Remove the current blue ball and spawn a new one.
                 blueBall = null;
                 initializeBlueBall();
             }
         }
     }
 
-
+    // Method to end the Game
     private void endGame() {
         int highScore = getHighScore();
         if(score > highScore) {
@@ -292,75 +291,61 @@ public class GameView extends View implements SensorEventListener {
             highScore = score;
         }
         Intent intent = new Intent(getContext(), GameOverActivity.class);
-        intent.putExtra("SCORE", score);  // Pass the score to GameOverActivity
+        intent.putExtra("SCORE", score);  // Passing the score to GameOverActivity
         getContext().startActivity(intent);
-
-        // Reset the score
-        score = 0;
-
-        // Unregister the sensor listener to stop updates
+        score = 0;  // Reset the score
         sensorManager.unregisterListener(this);
     }
 
 
-
+    //Method to avoid the collision
     private void resolveBallCollision(Ball a, Ball b) {
         float dx = b.x - a.x;
         float dy = b.y - a.y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
-        if (distance == 0.0) return; // avoid division by zero
+        if (distance == 0.0) return;
 
-        // Collision normal
         float nx = dx / distance;
         float ny = dy / distance;
 
-        // Relative velocity
         float vx = b.dx - a.dx;
         float vy = b.dy - a.dy;
 
-        // Relative velocity along the normal
         float dot = vx * nx + vy * ny;
 
-        // Only solve if balls are moving towards each other
         if (dot > 0) return;
 
-        float restitution = 1.0f; // perfectly elastic collision
+        float restitution = 1.0f;
 
-        // Impulse magnitude
         float impulse = (-(1 + restitution) * dot) / (1/a.radius + 1/b.radius);
 
-        // Adjust velocities
         a.dx -= (impulse / a.radius) * nx;
         a.dy -= (impulse / a.radius) * ny;
         b.dx += (impulse / b.radius) * nx;
         b.dy += (impulse / b.radius) * ny;
 
-        // Separate balls to avoid overlap/sticking
         float overlap = 0.5f * (distance - a.radius - b.radius);
         a.x -= overlap * nx;
         a.y -= overlap * ny;
         b.x += overlap * nx;
         b.y += overlap * ny;
     }
+
+    //Method to update the Balls to avoid the collision
     private void updateBalls() {
         for (Ball ball : redBalls) {
             ball.x += ball.dx;
             ball.y += ball.dy;
-
-            // Handle collisions with the screen edges for red balls
             handleWallCollision(ball);
         }
 
-        // Update blue ball if it exists
         if (blueBall != null) {
             blueBall.x += blueBall.dx;
             blueBall.y += blueBall.dy;
 
-            // Handle collisions with the screen edges for the blue ball
             handleWallCollision(blueBall);
 
-            // Check collisions between blue ball and red balls
             for (Ball redBall : redBalls) {
                 if (ballsAreColliding(blueBall, redBall)) {
                     resolveBallCollision(blueBall, redBall);
@@ -368,7 +353,7 @@ public class GameView extends View implements SensorEventListener {
             }
         }
 
-        // Detect and handle collisions between red balls
+        // For collisions between red balls
         for (int i = 0; i < redBalls.size(); i++) {
             for (int j = i + 1; j < redBalls.size(); j++) {
                 Ball ballA = redBalls.get(i);
@@ -380,25 +365,28 @@ public class GameView extends View implements SensorEventListener {
             }
         }
     }
+
+    //To avoid  the ball collision with the wall
     private void handleWallCollision(Ball ball) {
-        // Handle collisions with the screen edges
         if (ball.x - ball.radius < 0) {
-            ball.x = ball.radius;  // Ensure it's inside the screen
-            ball.dx = -ball.dx;    // Reverse direction
+            ball.x = ball.radius;
+            ball.dx = -ball.dx;
         }
         if (ball.x + ball.radius > getWidth()) {
-            ball.x = getWidth() - ball.radius; // Ensure it's inside the screen
-            ball.dx = -ball.dx;                // Reverse direction
+            ball.x = getWidth() - ball.radius;
+            ball.dx = -ball.dx;
         }
         if (ball.y - ball.radius < 0) {
-            ball.y = ball.radius;  // Ensure it's inside the screen
-            ball.dy = -ball.dy;    // Reverse direction
+            ball.y = ball.radius;
+            ball.dy = -ball.dy;
         }
         if (ball.y + ball.radius > getHeight()) {
-            ball.y = getHeight() - ball.radius; // Ensure it's inside the screen
-            ball.dy = -ball.dy;                // Reverse direction
+            ball.y = getHeight() - ball.radius;
+            ball.dy = -ball.dy;
         }
     }
+
+    //Method to check whether the balls are colliding
     private boolean ballsAreColliding(Ball a, Ball b) {
         float dx = b.x - a.x;
         float dy = b.y - a.y;
@@ -407,6 +395,5 @@ public class GameView extends View implements SensorEventListener {
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // This is unused for the current example, but it's requiblue by the SensorEventListener interface.
-    }
+     }
 }

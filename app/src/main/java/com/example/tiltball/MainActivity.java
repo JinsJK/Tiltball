@@ -1,4 +1,4 @@
-//MainActivity.java
+//Authors: Jins & Sailesh
 
 package com.example.tiltball;
 
@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
+// Class for MainActivity
 public class MainActivity extends AppCompatActivity {
 
     @Override
